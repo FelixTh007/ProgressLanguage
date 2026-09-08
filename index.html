@@ -4,7 +4,7 @@
 <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>Prototype Jeu d'Allemand - Responsive</title>
+      <title>Prototype Jeu d'Allemand - UX Améliorée</title>
       <style>
             * {
                   box-sizing: border-box;
@@ -13,7 +13,6 @@
                   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
 
-            /* Utilisation de 100dvh pour ignorer la barre d'adresse rétractable sur mobile */
             body {
                   background-color: #f4f7f6;
                   display: flex;
@@ -32,10 +31,8 @@
                   position: relative;
                   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
                   height: 100%;
-                  /* Prend toute la hauteur disponible */
             }
 
-            /* En-tête */
             header {
                   padding: 15px;
                   text-align: center;
@@ -46,7 +43,6 @@
                   flex-shrink: 0;
             }
 
-            /* Grille des mots : Scrollable si trop de mots */
             #grid-area {
                   flex: 1;
                   padding: 15px 10px;
@@ -55,7 +51,6 @@
                   gap: 8px;
                   align-items: center;
                   justify-content: flex-start;
-                  /* Aligné en haut pour faciliter le scroll */
                   overflow-y: auto;
             }
 
@@ -67,7 +62,6 @@
             }
 
             .cell {
-                  /* Fonction Clamp() : Taille min, Taille idéale (responsive), Taille max */
                   width: clamp(20px, 7vw, 35px);
                   height: clamp(20px, 7vw, 35px);
                   background: #e0e0e0;
@@ -113,7 +107,6 @@
             }
 
             .letter-btn {
-                  /* Boutons responsives */
                   width: clamp(40px, 12vw, 55px);
                   height: clamp(40px, 12vw, 55px);
                   border-radius: 50%;
@@ -125,6 +118,8 @@
                   box-shadow: 0 4px 0 #b2bec3;
                   cursor: pointer;
                   text-transform: uppercase;
+                  transition: 0.1s;
+                  /* Pour l'effet de clic */
             }
 
             .letter-btn:active {
@@ -133,11 +128,12 @@
             }
 
             .letter-btn.used {
+                  transform: scale(0.8);
                   opacity: 0.3;
                   pointer-events: none;
             }
 
-            /* Menu QCM (Modale du bas) */
+            /* Menu QCM */
             #qcm-modal {
                   position: absolute;
                   bottom: 0;
@@ -223,28 +219,35 @@
       </div>
 
       <script>
-            // --- MÊME CODE JAVASCRIPT QUE PRÉCÉDEMMENT ---
+            // --- 1. BASE DE DONNÉES (Clarifiée pour inclure des répétitions) ---
+            // Les mots `WASSER` et `BEEREN` ont des lettres répétées en interne.
             const levelData = {
-                  theme: "Gestion & Projet",
-                  letters: ["P", "R", "O", "J", "E", "K", "T", "P", "L", "A", "N"],
+                  theme: "Alimentation & Nature",
                   words: [
-                        { word: "PROJEKT", definition: "Le projet" },
-                        { word: "PLAN", definition: "Le plan / La planification" },
-                        { word: "LOKAL", definition: "Local" },
-                        { word: "PAKET", definition: "Le paquet / Le colis" },
-                        { word: "ROTE", definition: "Rouge (décliné)" }
+                        { word: "WASSER", definition: "L'eau" },
+                        { word: "APFEL", definition: "La pomme" },
+                        { word: "BROT", definition: "Le pain" },
+                        { word: "MILCH", definition: "Le lait" },
+                        { word: "BEEREN", definition: "Les baies / fruits rouges" }
                   ],
+                  // Le plateau contient toutes les lettres distinctes de TOUS les mots,
+                  // incluant les répétitions nécessaires. Par ex: il y a deux 'S' pour `WASSER`,
+                  // deux 'E' pour `BEEREN`. Ce tableau est le "plateau" des 5 étoiles dans ton image.
+                  letters: ["W", "A", "S", "S", "E", "R", "A", "P", "F", "E", "L", "B", "R", "O", "T", "M", "I", "L", "C", "H", "B", "E", "E", "R", "E", "N"],
                   allDefinitions: [
-                        "Le projet", "Le plan / La planification", "Local", "Le paquet / Le colis", "Rouge (décliné)",
-                        "La gestion", "Le chiffre d'affaires", "La réunion", "Le contrat", "Le client"
+                        "L'eau", "La pomme", "Le pain", "Le lait", "Les baies / fruits rouges",
+                        "La viande", "Le fromage", "L'arbre", "La fleur", "Le chien"
                   ]
             };
 
+            // --- 2. ÉTATS DU JEU ---
             let currentInput = "";
+            // selectedIndices stocke l'index UNIQUE du bouton cliqué, pas la lettre.
             let selectedIndices = [];
             let foundWords = [];
             let pendingWord = null;
 
+            // --- 3. SÉLECTEURS DOM ---
             const gridArea = document.getElementById('grid-area');
             const inputArea = document.getElementById('current-input-area');
             const lettersArea = document.getElementById('letters-area');
@@ -252,6 +255,7 @@
             const qcmButtonsArea = document.getElementById('qcm-buttons');
             const themeTitle = document.getElementById('theme-title');
 
+            // --- 4. INITIALISATION DU NIVEAU ---
             function initLevel() {
                   themeTitle.textContent = `Thème : ${levelData.theme}`;
 
@@ -276,10 +280,12 @@
                   });
             }
 
+            // --- 5. LOGIQUE DE SAISIE ---
             function handleLetterClick(letter, index, btn) {
                   currentInput += letter;
+                  // On stocke l'index pour s'assurer que c'est BIEN ce bouton qui a été cliqué.
                   selectedIndices.push(index);
-                  btn.classList.add('used');
+                  btn.classList.add('used'); // UX : Rétrécit et grise le bouton
                   updateInputDisplay();
                   checkWord();
             }
@@ -295,16 +301,19 @@
                   document.querySelectorAll('.letter-btn').forEach(btn => btn.classList.remove('used'));
             }
 
+            // --- 6. VÉRIFICATION DU MOT ---
             function checkWord() {
                   const match = levelData.words.find(w => w.word === currentInput);
                   if (match && !foundWords.includes(match.word)) {
                         pendingWord = match;
                         triggerQCM(match);
                   } else if (currentInput.length >= 7) {
+                        // On peut étendre cette logique, mais pour le prototype ça suffit.
                         resetInput();
                   }
             }
 
+            // --- 7. LOGIQUE DU QCM ---
             function triggerQCM(wordObj) {
                   let wrongOptions = levelData.allDefinitions.filter(d => d !== wordObj.definition);
                   wrongOptions = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -340,11 +349,13 @@
                         setTimeout(() => inputArea.classList.remove('shake'), 400);
 
                         qcmModal.style.display = 'none';
+                        // Important : on reset les boutons (ils redeviennent utilisables)
                         resetInput();
                         pendingWord = null;
                   }
             }
 
+            // --- 8. REMPLISSAGE DE LA GRILLE ---
             function fillGrid(word) {
                   const row = document.getElementById(`row-${word}`);
                   const cells = row.querySelectorAll('.cell');
