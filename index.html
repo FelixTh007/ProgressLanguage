@@ -4,11 +4,9 @@
 <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>Jeu de Mots Allemand - Tailwind</title>
-      <!-- Inclusion de Tailwind CSS via CDN -->
+      <title>Jeu de Mots Allemand - Hexagone & Correction</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
-            /* Animation d'erreur (secousse) */
             @keyframes shake {
 
                   0%,
@@ -31,6 +29,11 @@
                   animation: shake 0.4s ease-in-out;
                   color: #ef4444 !important;
             }
+
+            /* Style Hexagonal pour les boutons */
+            .hex-btn {
+                  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            }
       </style>
 </head>
 
@@ -39,28 +42,43 @@
       <div id="game-container"
             class="w-full max-w-md bg-slate-50 h-full flex flex-col justify-between relative shadow-2xl overflow-hidden">
 
-            <!-- En-tête / Thème de lettres -->
+            <!-- En-tête / Thème -->
             <header
-                  class="bg-indigo-600 text-white p-4 text-center shadow-md font-bold text-lg rounded-b-2xl flex flex-col gap-1">
+                  class="bg-indigo-600 text-white p-3 text-center shadow-md font-bold text-lg rounded-b-2xl flex flex-col gap-0.5">
                   <span class="text-xs uppercase tracking-widest text-indigo-200">Socle de Lettres</span>
                   <h1 id="theme-title" class="text-xl font-extrabold tracking-wider">L-A-S-T-P-O-R</h1>
             </header>
 
             <!-- Zone de la Grille de Mots -->
-            <main id="grid-area" class="flex-1 p-4 flex flex-col items-center justify-start gap-2.5 overflow-y-auto">
-                  <!-- Les lignes de mots seront générées ici -->
+            <main id="grid-area" class="flex-1 p-3 flex flex-col items-center justify-start gap-2 overflow-y-auto">
+                  <!-- Lignes générées ici -->
             </main>
 
-            <!-- Zone de Saisie en cours -->
-            <div id="current-input-area"
-                  class="h-12 flex items-center justify-center text-2xl font-black text-indigo-600 tracking-widest text-center px-4 uppercase">
-                  <!-- Lettres tapees -->
+            <!-- Zone de Saisie & Boutons de Restauration / Correction -->
+            <div class="flex flex-col items-center gap-1 bg-slate-100 p-2 border-t border-slate-200">
+                  <div id="current-input-area"
+                        class="h-10 flex items-center justify-center text-2xl font-black text-indigo-600 tracking-widest uppercase">
+                        <!-- Lettres en cours -->
+                  </div>
+
+                  <!-- Boutons d'Action : Effacer 1 lettre & Réinitialiser tout -->
+                  <div class="flex gap-3">
+                        <button onclick="removeLastLetter()"
+                              class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold rounded-lg shadow transition-all flex items-center gap-1 cursor-pointer">
+                              <span>⌫</span> Effacer
+                        </button>
+                        <button onclick="resetInput()"
+                              class="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-xs font-bold rounded-lg shadow transition-all flex items-center gap-1 cursor-pointer">
+                              <span>↺</span> Réinitialiser
+                        </button>
+                  </div>
             </div>
 
-            <!-- Plateau de Lettres à cliquer -->
-            <footer id="letters-area"
-                  class="p-4 pb-8 flex flex-wrap justify-center gap-2.5 bg-slate-100 border-t border-slate-200 rounded-t-3xl shadow-inner">
-                  <!-- Les boutons de lettres seront générés ici -->
+            <!-- Plateau Géométrique (Hexagone) -->
+            <footer class="p-4 pb-6 flex justify-center items-center bg-slate-200/60 shadow-inner">
+                  <div id="letters-area" class="relative w-60 h-60 flex items-center justify-center">
+                        <!-- Les boutons de lettres positionnés géométriquement en JS -->
+                  </div>
             </footer>
 
             <!-- Fenêtre QCM (Modal) -->
@@ -71,21 +89,16 @@
                               Sens</span>
                         <h2 class="font-bold text-slate-800 text-base mt-0.5">Quelle est la signification exacte ?</h2>
                   </div>
-                  <div id="qcm-buttons" class="flex flex-col gap-2.5 mt-1">
-                        <!-- Choix du QCM générés dynamiquement -->
-                  </div>
+                  <div id="qcm-buttons" class="flex flex-col gap-2.5 mt-1"></div>
             </div>
 
       </div>
 
       <script>
-            // --- 1. DICTIONNAIRE & CLUSTERS DE LETTRES ---
-            // Mots basés sur des combinaisons/anagrammes/extensions de lettres proches
             const levelData = {
                   title: "Cluster : P - O - S - T - R - A",
-                  // Reservoirs de lettres disponible sur le plateau
-                  letters: ["P", "O", "S", "T", "R", "A", "S"],
-                  // Mots cibles à deviner (avec significations descriptives en français, PAS de traductions mot-à-mot)
+                  // 7 Lettres : 1 centrale + 6 au sommet du polygone/hexagone
+                  letters: ["T", "P", "O", "S", "R", "A", "S"],
                   targetWords: [
                         { word: "PASS", definition: "Document officiel permettant d'établir l'identité et de franchir les frontières" },
                         { word: "POST", definition: "Service public ou privé d'acheminement du courrier et des colis" },
@@ -93,25 +106,20 @@
                         { word: "ROST", definition: "Couche rougeâtre qui se forme sur le fer lorsqu'il s'oxyde à l'air humide" },
                         { word: "STAR", definition: "Personnalité publique jouissant d'une très grande renommée dans le spectacle" }
                   ],
-                  // Pool de significations de RESERVE pour les pièges (Exclusivité garantie : aucun mot présent sur la grille n'est utilisé comme piège)
                   externalDefinitions: [
                         "Liquide transparent, inodore et insipide indispensable à toute forme de vie",
-                        "Condiment minéral blanc sous forme de petits grains utilisé pour rehausser le goût des mets",
+                        "Condiment minéral blanc sous forme de petits grains utilisé pour rehausser le goût",
                         "Aliment cuit au four préparé à partir de farine, d'eau et de levure",
                         "Édifice de grande hauteur plus haut que large dominant le paysage",
-                        "Images, émotions et sensations perçues durant les phases de sommeil",
-                        "Période obscure de la journée comprise entre le coucher du soleil et l'aube",
-                        "Espace délimité par des murs à l'intérieur d'une habitation"
+                        "Images, émotions et sensations perçues durant les phases de sommeil"
                   ]
             };
 
-            // --- 2. ÉTATS DU JEU ---
             let currentInput = "";
-            let selectedIndices = []; // Garde en mémoire l'index exact des boutons cliqués
+            let selectedIndices = [];
             let foundWords = [];
             let pendingWord = null;
 
-            // --- 3. SÉLECTEURS DOM ---
             const gridArea = document.getElementById('grid-area');
             const inputArea = document.getElementById('current-input-area');
             const lettersArea = document.getElementById('letters-area');
@@ -119,11 +127,10 @@
             const qcmButtonsArea = document.getElementById('qcm-buttons');
             const themeTitle = document.getElementById('theme-title');
 
-            // --- 4. INITIALISATION DU NIVEAU ---
             function initLevel() {
                   themeTitle.textContent = levelData.title;
 
-                  // Génération de la grille vide
+                  // Grille de mots
                   levelData.targetWords.forEach(obj => {
                         const row = document.createElement('div');
                         row.className = 'flex gap-1.5 justify-center';
@@ -131,92 +138,123 @@
 
                         for (let i = 0; i < obj.word.length; i++) {
                               const cell = document.createElement('div');
-                              cell.className = 'w-8 h-8 sm:w-10 sm:h-10 border-2 border-slate-300 bg-white rounded-lg flex items-center justify-center font-black text-lg sm:text-xl text-slate-700 uppercase shadow-sm transition-all duration-300 cell';
+                              cell.className = 'w-8 h-8 sm:w-9 sm:h-9 border-2 border-slate-300 bg-white rounded-lg flex items-center justify-center font-black text-lg text-slate-700 uppercase shadow-sm transition-all duration-300 cell';
                               row.appendChild(cell);
                         }
                         gridArea.appendChild(row);
                   });
 
-                  // Génération des boutons de lettres uniques
-                  levelData.letters.forEach((letter, index) => {
-                        const btn = document.createElement('button');
-                        btn.className = 'w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white text-slate-800 border-2 border-indigo-200 font-extrabold text-lg sm:text-xl shadow-md active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center uppercase hover:border-indigo-400 letter-btn';
-                        btn.textContent = letter;
-                        btn.onclick = () => handleLetterClick(letter, index, btn);
-                        lettersArea.appendChild(btn);
+                  // Disposition Géométrique Hexagonale
+                  renderHexagonalLetters(levelData.letters);
+            }
+
+            // Calcul géométrique du placement en hexagone
+            function renderHexagonalLetters(letters) {
+                  lettersArea.innerHTML = "";
+                  const size = 220; // Rayon du conteneur
+                  const centerX = size / 2;
+                  const centerY = size / 2;
+                  const radius = 80; // Distance du centre vers les sommets
+
+                  const hasCenter = letters.length >= 7;
+                  const outerLetters = hasCenter ? letters.slice(1) : letters;
+
+                  // 1. Lettre au Centre (si au moins 7 lettres)
+                  if (hasCenter) {
+                        createLetterBtn(letters[0], 0, centerX, centerY, true);
+                  }
+
+                  // 2. Lettres sur les sommets de l'Hexagone (Polygone)
+                  const count = outerLetters.length;
+                  const angleStep = (2 * Math.PI) / count;
+
+                  outerLetters.forEach((letter, i) => {
+                        const index = hasCenter ? i + 1 : i;
+                        const angle = i * angleStep - (Math.PI / 2); // Démarrer en haut (-90deg)
+                        const x = centerX + radius * Math.cos(angle);
+                        const y = centerY + radius * Math.sin(angle);
+                        createLetterBtn(letter, index, x, y, false);
                   });
             }
 
-            // --- 5. LOGIQUE DE SAISIE ---
+            function createLetterBtn(letter, index, x, y, isCenter) {
+                  const btn = document.createElement('button');
+
+                  // Style hexagone et couleurs dynamiques
+                  const baseColor = isCenter ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-800 border-indigo-200';
+                  btn.className = `absolute w-12 h-12 hex-btn ${baseColor} border-2 font-black text-xl shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center uppercase letter-btn`;
+
+                  btn.style.left = `${x - 24}px`;
+                  btn.style.top = `${y - 24}px`;
+                  btn.textContent = letter;
+                  btn.dataset.index = index;
+
+                  btn.onclick = () => handleLetterClick(letter, index, btn);
+                  lettersArea.appendChild(btn);
+            }
+
             function handleLetterClick(letter, index, btn) {
                   currentInput += letter;
                   selectedIndices.push(index);
 
-                  // Effet visuel sur le bouton utilisé
-                  btn.classList.add('opacity-20', 'scale-90', 'pointer-events-none', 'border-slate-300', 'bg-slate-200', 'shadow-none');
+                  btn.classList.add('opacity-20', 'pointer-events-none', 'scale-90');
 
                   updateInputDisplay();
                   checkWord();
+            }
+
+            // RESTAURATION 1 : Supprimer la dernière lettre tapée
+            function removeLastLetter() {
+                  if (selectedIndices.length === 0) return;
+
+                  const lastIndex = selectedIndices.pop();
+                  currentInput = currentInput.slice(0, -1);
+
+                  const btn = document.querySelector(`.letter-btn[data-index="${lastIndex}"]`);
+                  if (btn) {
+                        btn.classList.remove('opacity-20', 'pointer-events-none', 'scale-90');
+                  }
+
+                  updateInputDisplay();
+            }
+
+            // RESTAURATION 2 : Réinitialiser tout
+            function resetInput() {
+                  currentInput = "";
+                  selectedIndices = [];
+                  updateInputDisplay();
+
+                  document.querySelectorAll('.letter-btn').forEach(btn => {
+                        btn.classList.remove('opacity-20', 'pointer-events-none', 'scale-90');
+                  });
             }
 
             function updateInputDisplay() {
                   inputArea.textContent = currentInput;
             }
 
-            function resetInput() {
-                  currentInput = "";
-                  selectedIndices = [];
-                  updateInputDisplay();
-
-                  // Réinitialiser les boutons de lettres
-                  document.querySelectorAll('.letter-btn').forEach(btn => {
-                        btn.classList.remove('opacity-20', 'scale-90', 'pointer-events-none', 'border-slate-300', 'bg-slate-200', 'shadow-none');
-                  });
-            }
-
-            // --- 6. VÉRIFICATION DU MOT ---
             function checkWord() {
                   const match = levelData.targetWords.find(w => w.word === currentInput);
 
                   if (match && !foundWords.includes(match.word)) {
                         pendingWord = match;
                         triggerQCM(match);
-                  } else if (currentInput.length >= 7) {
-                        // Si la saisie dépasse la taille max sans correspondance
-                        triggerErrorShake();
                   }
             }
 
-            function triggerErrorShake() {
-                  inputArea.classList.add('shake');
-                  setTimeout(() => {
-                        inputArea.classList.remove('shake');
-                        resetInput();
-                  }, 400);
-            }
-
-            // --- 7. LOGIQUE DU QCM AVEC PIÈGES EXCLUSIFS ---
             function triggerQCM(wordObj) {
-                  // Exclusivité : On filtre la réserve pour S'ASSURER qu'aucune définition
-                  // d'un autre mot à trouver dans le niveau présent ne soit utilisée.
                   const targetDefinitions = levelData.targetWords.map(w => w.definition);
-
                   let poolForTraps = levelData.externalDefinitions.filter(
                         def => !targetDefinitions.includes(def) && def !== wordObj.definition
                   );
 
-                  // Mélanger et piocher 3 pièges
                   poolForTraps = poolForTraps.sort(() => 0.5 - Math.random()).slice(0, 3);
+                  let options = [wordObj.definition, ...poolForTraps].sort(() => 0.5 - Math.random());
 
-                  // Créer l'ensemble des 4 propositions et mélanger leurs positions
-                  let options = [wordObj.definition, ...poolForTraps];
-                  options = options.sort(() => 0.5 - Math.random());
-
-                  // Rendu des boutons QCM dans le modal
                   qcmButtonsArea.innerHTML = "";
                   options.forEach(opt => {
                         const btn = document.createElement('button');
-                        btn.className = 'w-full p-3 border-2 border-indigo-500/30 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 text-indigo-950 rounded-xl font-medium text-xs sm:text-sm text-left transition-all active:scale-[0.98] cursor-pointer';
+                        btn.className = 'w-full p-3 border-2 border-indigo-500/30 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white text-indigo-950 rounded-xl font-medium text-xs text-left transition-all active:scale-[0.98] cursor-pointer';
                         btn.textContent = opt;
                         btn.onclick = () => handleQcmAnswer(opt, wordObj.definition);
                         qcmButtonsArea.appendChild(btn);
@@ -228,7 +266,6 @@
 
             function handleQcmAnswer(selected, correct) {
                   if (selected === correct) {
-                        // Bonne réponse : révéler sur la grille
                         fillGrid(pendingWord.word);
                         foundWords.push(pendingWord.word);
 
@@ -237,12 +274,15 @@
                         pendingWord = null;
 
                         if (foundWords.length === levelData.targetWords.length) {
-                              setTimeout(() => alert("🎉 Félicitations ! Vous avez maîtrisé ce cluster de mots !"), 300);
+                              setTimeout(() => alert("🎉 Félicitations ! Niveau terminé !"), 300);
                         }
                   } else {
-                        // Mauvaise réponse : animation d'erreur, fermeture et réinitialisation de la saisie
                         closeQCM();
-                        triggerErrorShake();
+                        inputArea.classList.add('shake');
+                        setTimeout(() => {
+                              inputArea.classList.remove('shake');
+                              resetInput();
+                        }, 400);
                         pendingWord = null;
                   }
             }
@@ -252,18 +292,16 @@
                   qcmModal.classList.remove('flex');
             }
 
-            // --- 8. REMPLISSAGE DE LA GRILLE ---
             function fillGrid(word) {
                   const row = document.getElementById(`row-${word}`);
                   const cells = row.querySelectorAll('.cell');
                   for (let i = 0; i < word.length; i++) {
                         cells[i].textContent = word[i];
-                        cells[i].classList.add('bg-emerald-500', 'border-emerald-600', 'text-white', 'shadow-md', 'scale-105');
+                        cells[i].classList.add('bg-emerald-500', 'border-emerald-600', 'text-white', 'shadow-md');
                         cells[i].classList.remove('bg-white', 'border-slate-300', 'text-slate-700');
                   }
             }
 
-            // Lancer le prototype
             initLevel();
       </script>
 </body>
