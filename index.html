@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prototype Jeu d'Allemand</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        
+        #game-container {
+            width: 100%;
+            max-width: 400px; /* Format mobile */
+            background: white;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* En-tête / Mot clé */
+        header { padding: 20px; text-align: center; background: #6c5ce7; color: white; font-weight: bold; font-size: 1.2rem; }
+
+        /* Grille des mots */
+        #grid-area { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; }
+        .word-row { display: flex; gap: 5px; }
+        .cell {
+            width: 35px; height: 35px; background: #e0e0e0; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.2rem; color: #2d3436; text-transform: uppercase;
+        }
+        .cell.found { background: #00cec9; color: white; }
+
+        /* Saisie en cours */
+        #current-input-area { height: 60px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; letter-spacing: 5px; color: #6c5ce7; }
+
+        /* Lettres à jouer */
+        #letters-area { padding: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 40px; }
+        .letter-btn {
+            width: 50px; height: 50px; border-radius: 50%; background: #dfe6e9; border: none;
+            font-size: 1.5rem; font-weight: bold; color: #2d3436; box-shadow: 0 4px 0 #b2bec3; cursor: pointer; text-transform: uppercase;
+        }
+        .letter-btn:active { transform: translateY(4px); box-shadow: none; }
+        .letter-btn.used { opacity: 0.3; pointer-events: none; }
+
+        /* Menu QCM (Caché par défaut) */
+        #qcm-modal {
+            position: absolute; bottom: 0; left: 0; right: 0; background: white;
+            padding: 20px; border-top-left-radius: 20px; border-top-right-radius: 20px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: none; flex-direction: column; gap: 10px; z-index: 10;
+        }
+        #qcm-modal h3 { text-align: center; margin-bottom: 10px; color: #2d3436; }
+        .qcm-btn {
+            padding: 15px; border: 2px solid #6c5ce7; background: transparent; border-radius: 10px;
+            font-size: 1rem; color: #6c5ce7; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .qcm-btn:active { background: #6c5ce7; color: white; }
+
+        /* Effet d'erreur */
+        .shake { animation: shake 0.4s; color: #d63031 !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <header id="theme-title">Thème : ...</header>
+    
+    <div id="grid-area"></div>
+    
+    <div id="current-input-area"></div>
+    
+    <div id="letters-area"></div>
+
+    <div id="qcm-modal">
+        <h3>Que signifie ce mot ?</h3>
+        <div id="qcm-buttons" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+</div>
+
+<script>
+    // --- 1. BASE DE DONNÉES (Exemple avec 5 mots pour le test) ---
+    // Tu peux facilement étendre cette base à 20 mots ou plus.
+    const levelData = {
+        theme: "Gestion & Projet",
+        letters: ["P", "R", "O", "J", "E", "K", "T", "P", "L", "A", "N"],
+        words: [
+            { word: "PROJEKT", definition: "Le projet" },
+            { word: "PLAN", definition: "Le plan / La planification" },
+            { word: "LOKAL", definition: "Local" },
+            { word: "PAKET", definition: "Le paquet / Le colis" },
+            { word: "ROTE", definition: "Rouge (décliné)" }
+        ],
+        allDefinitions: [
+            "Le projet", "Le plan / La planification", "Local", "Le paquet / Le colis", "Rouge (décliné)",
+            "La gestion", "Le chiffre d'affaires", "La réunion", "Le contrat", "Le client"
+        ]
+    };
+
+    // --- 2. ÉTATS DU JEU ---
+    let currentInput = "";
+    let selectedIndices = []; // Pour pister quelles lettres ont été cliquées
+    let foundWords = [];
+    let pendingWord = null; // Mot en attente de validation QCM
+
+    // --- 3. SÉLECTEURS DOM ---
+    const gridArea = document.getElementById('grid-area');
+    const inputArea = document.getElementById('current-input-area');
+    const lettersArea = document.getElementById('letters-area');
+    const qcmModal = document.getElementById('qcm-modal');
+    const qcmButtonsArea = document.getElementById('qcm-buttons');
+    const themeTitle = document.getElementById('theme-title');
+
+    // --- 4. INITIALISATION DU NIVEAU ---
+    function initLevel() {
+        themeTitle.textContent = `Thème : ${levelData.theme}`;
+        
+        // Générer la grille
+        levelData.words.forEach(obj => {
+            const row = document.createElement('div');
+            row.className = 'word-row';
+            row.id = `row-${obj.word}`;
+            for (let i = 0; i < obj.word.length; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                row.appendChild(cell);
+            }
+            gridArea.appendChild(row);
+        });
+
+        // Générer les boutons de lettres
+        levelData.letters.forEach((letter, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'letter-btn';
+            btn.textContent = letter;
+            btn.onclick = () => handleLetterClick(letter, index, btn);
+            lettersArea.appendChild(btn);
+        });
+    }
+
+    // --- 5. LOGIQUE DE SAISIE ---
+    function handleLetterClick(letter, index, btn) {
+        currentInput += letter;
+        selectedIndices.push(index);
+        btn.classList.add('used');
+        updateInputDisplay();
+        checkWord();
+    }
+
+    function updateInputDisplay() {
+        inputArea.textContent = currentInput;
+    }
+
+    function resetInput() {
+        currentInput = "";
+        selectedIndices = [];
+        updateInputDisplay();
+        document.querySelectorAll('.letter-btn').forEach(btn => btn.classList.remove('used'));
+    }
+
+    // --- 6. VÉRIFICATION DU MOT ---
+    function checkWord() {
+        const match = levelData.words.find(w => w.word === currentInput);
+        
+        if (match && !foundWords.includes(match.word)) {
+            pendingWord = match;
+            triggerQCM(match);
+        } else if (currentInput.length >= 7) { 
+            // Si le mot est trop long sans correspondance, on reset (optionnel)
+            resetInput();
+        }
+    }
+
+    // --- 7. LOGIQUE DU QCM ---
+    function triggerQCM(wordObj) {
+        // Obtenir 3 mauvaises réponses aléatoires
+        let wrongOptions = levelData.allDefinitions.filter(d => d !== wordObj.definition);
+        wrongOptions = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        // Créer les 4 choix et les mélanger
+        let options = [wordObj.definition, ...wrongOptions];
+        options = options.sort(() => 0.5 - Math.random());
+
+        // Afficher les boutons
+        qcmButtonsArea.innerHTML = "";
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'qcm-btn';
+            btn.textContent = opt;
+            btn.onclick = () => handleQcmAnswer(opt, wordObj.definition);
+            qcmButtonsArea.appendChild(btn);
+        });
+
+        qcmModal.style.display = 'flex';
+    }
+
+    function handleQcmAnswer(selected, correct) {
+        if (selected === correct) {
+            // Bonne réponse : on remplit la grille
+            fillGrid(pendingWord.word);
+            foundWords.push(pendingWord.word);
+            qcmModal.style.display = 'none';
+            resetInput();
+            pendingWord = null;
+
+            if (foundWords.length === levelData.words.length) {
+                setTimeout(() => alert("Niveau Terminé !"), 500);
+            }
+        } else {
+            // Mauvaise réponse : animation d'erreur, on cache le QCM et on reset les lettres
+            inputArea.classList.add('shake');
+            setTimeout(() => inputArea.classList.remove('shake'), 400);
+            
+            qcmModal.style.display = 'none';
+            resetInput();
+            pendingWord = null;
+        }
+    }
+
+    // --- 8. REMPLISSAGE DE LA GRILLE ---
+    function fillGrid(word) {
+        const row = document.getElementById(`row-${word}`);
+        const cells = row.querySelectorAll('.cell');
+        for (let i = 0; i < word.length; i++) {
+            cells[i].textContent = word[i];
+            cells[i].classList.add('found');
+        }
+    }
+
+    // Lancer le jeu
+    initLevel();
+
+</script>
+</body>
+</html>
