@@ -4,185 +4,11 @@
 <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>Prototype Jeu d'Allemand - UX Améliorée</title>
+      <title>Jeu de Mots Allemand - Tailwind</title>
+      <!-- Inclusion de Tailwind CSS via CDN -->
+      <script src="https://cdn.tailwindcss.com"></script>
       <style>
-            * {
-                  box-sizing: border-box;
-                  margin: 0;
-                  padding: 0;
-                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            }
-
-            body {
-                  background-color: #f4f7f6;
-                  display: flex;
-                  justify-content: center;
-                  height: 100dvh;
-                  margin: 0;
-                  overflow: hidden;
-            }
-
-            #game-container {
-                  width: 100%;
-                  max-width: 500px;
-                  background: white;
-                  display: flex;
-                  flex-direction: column;
-                  position: relative;
-                  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-                  height: 100%;
-            }
-
-            header {
-                  padding: 15px;
-                  text-align: center;
-                  background: #6c5ce7;
-                  color: white;
-                  font-weight: bold;
-                  font-size: clamp(1rem, 4vw, 1.2rem);
-                  flex-shrink: 0;
-            }
-
-            #grid-area {
-                  flex: 1;
-                  padding: 15px 10px;
-                  display: flex;
-                  flex-direction: column;
-                  gap: 8px;
-                  align-items: center;
-                  justify-content: flex-start;
-                  overflow-y: auto;
-            }
-
-            .word-row {
-                  display: flex;
-                  gap: 4px;
-                  justify-content: center;
-                  flex-wrap: nowrap;
-            }
-
-            .cell {
-                  width: clamp(20px, 7vw, 35px);
-                  height: clamp(20px, 7vw, 35px);
-                  background: #e0e0e0;
-                  border-radius: 6px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-weight: bold;
-                  font-size: clamp(0.9rem, 3.5vw, 1.2rem);
-                  color: #2d3436;
-                  text-transform: uppercase;
-            }
-
-            .cell.found {
-                  background: #00cec9;
-                  color: white;
-            }
-
-            /* Saisie en cours */
-            #current-input-area {
-                  min-height: 50px;
-                  padding: 10px;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  flex-wrap: wrap;
-                  font-size: clamp(1.2rem, 5vw, 1.5rem);
-                  font-weight: bold;
-                  letter-spacing: 3px;
-                  color: #6c5ce7;
-                  flex-shrink: 0;
-                  text-align: center;
-            }
-
-            /* Lettres à jouer */
-            #letters-area {
-                  padding: 10px 15px 25px 15px;
-                  display: flex;
-                  flex-wrap: wrap;
-                  justify-content: center;
-                  gap: 10px;
-                  flex-shrink: 0;
-            }
-
-            .letter-btn {
-                  width: clamp(40px, 12vw, 55px);
-                  height: clamp(40px, 12vw, 55px);
-                  border-radius: 50%;
-                  background: #dfe6e9;
-                  border: none;
-                  font-size: clamp(1.1rem, 4vw, 1.5rem);
-                  font-weight: bold;
-                  color: #2d3436;
-                  box-shadow: 0 4px 0 #b2bec3;
-                  cursor: pointer;
-                  text-transform: uppercase;
-                  transition: 0.1s;
-                  /* Pour l'effet de clic */
-            }
-
-            .letter-btn:active {
-                  transform: translateY(4px);
-                  box-shadow: none;
-            }
-
-            .letter-btn.used {
-                  transform: scale(0.8);
-                  opacity: 0.3;
-                  pointer-events: none;
-            }
-
-            /* Menu QCM */
-            #qcm-modal {
-                  position: absolute;
-                  bottom: 0;
-                  left: 0;
-                  right: 0;
-                  background: white;
-                  padding: 20px;
-                  border-top-left-radius: 20px;
-                  border-top-right-radius: 20px;
-                  box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.2);
-                  display: none;
-                  flex-direction: column;
-                  gap: 10px;
-                  z-index: 10;
-                  max-height: 85vh;
-                  overflow-y: auto;
-            }
-
-            #qcm-modal h3 {
-                  text-align: center;
-                  margin-bottom: 10px;
-                  color: #2d3436;
-                  font-size: clamp(1.1rem, 4vw, 1.3rem);
-            }
-
-            .qcm-btn {
-                  padding: 12px;
-                  border: 2px solid #6c5ce7;
-                  background: transparent;
-                  border-radius: 10px;
-                  font-size: clamp(0.9rem, 3.5vw, 1rem);
-                  color: #6c5ce7;
-                  font-weight: bold;
-                  cursor: pointer;
-                  transition: 0.2s;
-                  text-align: center;
-            }
-
-            .qcm-btn:active {
-                  background: #6c5ce7;
-                  color: white;
-            }
-
-            /* Effet d'erreur */
-            .shake {
-                  animation: shake 0.4s;
-                  color: #d63031 !important;
-            }
-
+            /* Animation d'erreur (secousse) */
             @keyframes shake {
 
                   0%,
@@ -190,60 +16,98 @@
                         transform: translateX(0);
                   }
 
-                  25% {
-                        transform: translateX(-5px);
+                  20%,
+                  60% {
+                        transform: translateX(-6px);
                   }
 
-                  75% {
-                        transform: translateX(5px);
+                  40%,
+                  80% {
+                        transform: translateX(6px);
                   }
+            }
+
+            .shake {
+                  animation: shake 0.4s ease-in-out;
+                  color: #ef4444 !important;
             }
       </style>
 </head>
 
-<body>
+<body class="bg-slate-900 text-slate-800 flex justify-center h-dvh margin-0 overflow-hidden font-sans select-none">
 
-      <div id="game-container">
-            <header id="theme-title">Thème : ...</header>
+      <div id="game-container"
+            class="w-full max-w-md bg-slate-50 h-full flex flex-col justify-between relative shadow-2xl overflow-hidden">
 
-            <div id="grid-area"></div>
+            <!-- En-tête / Thème de lettres -->
+            <header
+                  class="bg-indigo-600 text-white p-4 text-center shadow-md font-bold text-lg rounded-b-2xl flex flex-col gap-1">
+                  <span class="text-xs uppercase tracking-widest text-indigo-200">Socle de Lettres</span>
+                  <h1 id="theme-title" class="text-xl font-extrabold tracking-wider">L-A-S-T-P-O-R</h1>
+            </header>
 
-            <div id="current-input-area"></div>
+            <!-- Zone de la Grille de Mots -->
+            <main id="grid-area" class="flex-1 p-4 flex flex-col items-center justify-start gap-2.5 overflow-y-auto">
+                  <!-- Les lignes de mots seront générées ici -->
+            </main>
 
-            <div id="letters-area"></div>
-
-            <div id="qcm-modal">
-                  <h3>Que signifie ce mot ?</h3>
-                  <div id="qcm-buttons" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <!-- Zone de Saisie en cours -->
+            <div id="current-input-area"
+                  class="h-12 flex items-center justify-center text-2xl font-black text-indigo-600 tracking-widest text-center px-4 uppercase">
+                  <!-- Lettres tapees -->
             </div>
+
+            <!-- Plateau de Lettres à cliquer -->
+            <footer id="letters-area"
+                  class="p-4 pb-8 flex flex-wrap justify-center gap-2.5 bg-slate-100 border-t border-slate-200 rounded-t-3xl shadow-inner">
+                  <!-- Les boutons de lettres seront générés ici -->
+            </footer>
+
+            <!-- Fenêtre QCM (Modal) -->
+            <div id="qcm-modal"
+                  class="fixed inset-x-0 bottom-0 max-w-md mx-auto bg-white p-5 rounded-t-3xl shadow-[0_-10px_30px_rgba(0,0,0,0.2)] hidden flex-col gap-3 z-50 border-t-2 border-indigo-500">
+                  <div class="text-center">
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-500">Validation du
+                              Sens</span>
+                        <h2 class="font-bold text-slate-800 text-base mt-0.5">Quelle est la signification exacte ?</h2>
+                  </div>
+                  <div id="qcm-buttons" class="flex flex-col gap-2.5 mt-1">
+                        <!-- Choix du QCM générés dynamiquement -->
+                  </div>
+            </div>
+
       </div>
 
       <script>
-            // --- 1. BASE DE DONNÉES (Clarifiée pour inclure des répétitions) ---
-            // Les mots `WASSER` et `BEEREN` ont des lettres répétées en interne.
+            // --- 1. DICTIONNAIRE & CLUSTERS DE LETTRES ---
+            // Mots basés sur des combinaisons/anagrammes/extensions de lettres proches
             const levelData = {
-                  theme: "Alimentation & Nature",
-                  words: [
-                        { word: "WASSER", definition: "L'eau" },
-                        { word: "APFEL", definition: "La pomme" },
-                        { word: "BROT", definition: "Le pain" },
-                        { word: "MILCH", definition: "Le lait" },
-                        { word: "BEEREN", definition: "Les baies / fruits rouges" }
+                  title: "Cluster : P - O - S - T - R - A",
+                  // Reservoirs de lettres disponible sur le plateau
+                  letters: ["P", "O", "S", "T", "R", "A", "S"],
+                  // Mots cibles à deviner (avec significations descriptives en français, PAS de traductions mot-à-mot)
+                  targetWords: [
+                        { word: "PASS", definition: "Document officiel permettant d'établir l'identité et de franchir les frontières" },
+                        { word: "POST", definition: "Service public ou privé d'acheminement du courrier et des colis" },
+                        { word: "SPORT", definition: "Activité physique exercée pour le plaisir, l'entraînement ou la compétition" },
+                        { word: "ROST", definition: "Couche rougeâtre qui se forme sur le fer lorsqu'il s'oxyde à l'air humide" },
+                        { word: "STAR", definition: "Personnalité publique jouissant d'une très grande renommée dans le spectacle" }
                   ],
-                  // Le plateau contient toutes les lettres distinctes de TOUS les mots,
-                  // incluant les répétitions nécessaires. Par ex: il y a deux 'S' pour `WASSER`,
-                  // deux 'E' pour `BEEREN`. Ce tableau est le "plateau" des 5 étoiles dans ton image.
-                  letters: ["W", "A", "S", "S", "E", "R", "A", "P", "F", "E", "L", "B", "R", "O", "T", "M", "I", "L", "C", "H", "B", "E", "E", "R", "E", "N"],
-                  allDefinitions: [
-                        "L'eau", "La pomme", "Le pain", "Le lait", "Les baies / fruits rouges",
-                        "La viande", "Le fromage", "L'arbre", "La fleur", "Le chien"
+                  // Pool de significations de RESERVE pour les pièges (Exclusivité garantie : aucun mot présent sur la grille n'est utilisé comme piège)
+                  externalDefinitions: [
+                        "Liquide transparent, inodore et insipide indispensable à toute forme de vie",
+                        "Condiment minéral blanc sous forme de petits grains utilisé pour rehausser le goût des mets",
+                        "Aliment cuit au four préparé à partir de farine, d'eau et de levure",
+                        "Édifice de grande hauteur plus haut que large dominant le paysage",
+                        "Images, émotions et sensations perçues durant les phases de sommeil",
+                        "Période obscure de la journée comprise entre le coucher du soleil et l'aube",
+                        "Espace délimité par des murs à l'intérieur d'une habitation"
                   ]
             };
 
             // --- 2. ÉTATS DU JEU ---
             let currentInput = "";
-            // selectedIndices stocke l'index UNIQUE du bouton cliqué, pas la lettre.
-            let selectedIndices = [];
+            let selectedIndices = []; // Garde en mémoire l'index exact des boutons cliqués
             let foundWords = [];
             let pendingWord = null;
 
@@ -257,23 +121,26 @@
 
             // --- 4. INITIALISATION DU NIVEAU ---
             function initLevel() {
-                  themeTitle.textContent = `Thème : ${levelData.theme}`;
+                  themeTitle.textContent = levelData.title;
 
-                  levelData.words.forEach(obj => {
+                  // Génération de la grille vide
+                  levelData.targetWords.forEach(obj => {
                         const row = document.createElement('div');
-                        row.className = 'word-row';
+                        row.className = 'flex gap-1.5 justify-center';
                         row.id = `row-${obj.word}`;
+
                         for (let i = 0; i < obj.word.length; i++) {
                               const cell = document.createElement('div');
-                              cell.className = 'cell';
+                              cell.className = 'w-8 h-8 sm:w-10 sm:h-10 border-2 border-slate-300 bg-white rounded-lg flex items-center justify-center font-black text-lg sm:text-xl text-slate-700 uppercase shadow-sm transition-all duration-300 cell';
                               row.appendChild(cell);
                         }
                         gridArea.appendChild(row);
                   });
 
+                  // Génération des boutons de lettres uniques
                   levelData.letters.forEach((letter, index) => {
                         const btn = document.createElement('button');
-                        btn.className = 'letter-btn';
+                        btn.className = 'w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white text-slate-800 border-2 border-indigo-200 font-extrabold text-lg sm:text-xl shadow-md active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center uppercase hover:border-indigo-400 letter-btn';
                         btn.textContent = letter;
                         btn.onclick = () => handleLetterClick(letter, index, btn);
                         lettersArea.appendChild(btn);
@@ -283,9 +150,11 @@
             // --- 5. LOGIQUE DE SAISIE ---
             function handleLetterClick(letter, index, btn) {
                   currentInput += letter;
-                  // On stocke l'index pour s'assurer que c'est BIEN ce bouton qui a été cliqué.
                   selectedIndices.push(index);
-                  btn.classList.add('used'); // UX : Rétrécit et grise le bouton
+
+                  // Effet visuel sur le bouton utilisé
+                  btn.classList.add('opacity-20', 'scale-90', 'pointer-events-none', 'border-slate-300', 'bg-slate-200', 'shadow-none');
+
                   updateInputDisplay();
                   checkWord();
             }
@@ -298,61 +167,89 @@
                   currentInput = "";
                   selectedIndices = [];
                   updateInputDisplay();
-                  document.querySelectorAll('.letter-btn').forEach(btn => btn.classList.remove('used'));
+
+                  // Réinitialiser les boutons de lettres
+                  document.querySelectorAll('.letter-btn').forEach(btn => {
+                        btn.classList.remove('opacity-20', 'scale-90', 'pointer-events-none', 'border-slate-300', 'bg-slate-200', 'shadow-none');
+                  });
             }
 
             // --- 6. VÉRIFICATION DU MOT ---
             function checkWord() {
-                  const match = levelData.words.find(w => w.word === currentInput);
+                  const match = levelData.targetWords.find(w => w.word === currentInput);
+
                   if (match && !foundWords.includes(match.word)) {
                         pendingWord = match;
                         triggerQCM(match);
                   } else if (currentInput.length >= 7) {
-                        // On peut étendre cette logique, mais pour le prototype ça suffit.
-                        resetInput();
+                        // Si la saisie dépasse la taille max sans correspondance
+                        triggerErrorShake();
                   }
             }
 
-            // --- 7. LOGIQUE DU QCM ---
-            function triggerQCM(wordObj) {
-                  let wrongOptions = levelData.allDefinitions.filter(d => d !== wordObj.definition);
-                  wrongOptions = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
+            function triggerErrorShake() {
+                  inputArea.classList.add('shake');
+                  setTimeout(() => {
+                        inputArea.classList.remove('shake');
+                        resetInput();
+                  }, 400);
+            }
 
-                  let options = [wordObj.definition, ...wrongOptions];
+            // --- 7. LOGIQUE DU QCM AVEC PIÈGES EXCLUSIFS ---
+            function triggerQCM(wordObj) {
+                  // Exclusivité : On filtre la réserve pour S'ASSURER qu'aucune définition
+                  // d'un autre mot à trouver dans le niveau présent ne soit utilisée.
+                  const targetDefinitions = levelData.targetWords.map(w => w.definition);
+
+                  let poolForTraps = levelData.externalDefinitions.filter(
+                        def => !targetDefinitions.includes(def) && def !== wordObj.definition
+                  );
+
+                  // Mélanger et piocher 3 pièges
+                  poolForTraps = poolForTraps.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+                  // Créer l'ensemble des 4 propositions et mélanger leurs positions
+                  let options = [wordObj.definition, ...poolForTraps];
                   options = options.sort(() => 0.5 - Math.random());
 
+                  // Rendu des boutons QCM dans le modal
                   qcmButtonsArea.innerHTML = "";
                   options.forEach(opt => {
                         const btn = document.createElement('button');
-                        btn.className = 'qcm-btn';
+                        btn.className = 'w-full p-3 border-2 border-indigo-500/30 bg-indigo-50/50 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 text-indigo-950 rounded-xl font-medium text-xs sm:text-sm text-left transition-all active:scale-[0.98] cursor-pointer';
                         btn.textContent = opt;
                         btn.onclick = () => handleQcmAnswer(opt, wordObj.definition);
                         qcmButtonsArea.appendChild(btn);
                   });
 
-                  qcmModal.style.display = 'flex';
+                  qcmModal.classList.remove('hidden');
+                  qcmModal.classList.add('flex');
             }
 
             function handleQcmAnswer(selected, correct) {
                   if (selected === correct) {
+                        // Bonne réponse : révéler sur la grille
                         fillGrid(pendingWord.word);
                         foundWords.push(pendingWord.word);
-                        qcmModal.style.display = 'none';
+
+                        closeQCM();
                         resetInput();
                         pendingWord = null;
 
-                        if (foundWords.length === levelData.words.length) {
-                              setTimeout(() => alert("Niveau Terminé !"), 500);
+                        if (foundWords.length === levelData.targetWords.length) {
+                              setTimeout(() => alert("🎉 Félicitations ! Vous avez maîtrisé ce cluster de mots !"), 300);
                         }
                   } else {
-                        inputArea.classList.add('shake');
-                        setTimeout(() => inputArea.classList.remove('shake'), 400);
-
-                        qcmModal.style.display = 'none';
-                        // Important : on reset les boutons (ils redeviennent utilisables)
-                        resetInput();
+                        // Mauvaise réponse : animation d'erreur, fermeture et réinitialisation de la saisie
+                        closeQCM();
+                        triggerErrorShake();
                         pendingWord = null;
                   }
+            }
+
+            function closeQCM() {
+                  qcmModal.classList.add('hidden');
+                  qcmModal.classList.remove('flex');
             }
 
             // --- 8. REMPLISSAGE DE LA GRILLE ---
@@ -361,10 +258,12 @@
                   const cells = row.querySelectorAll('.cell');
                   for (let i = 0; i < word.length; i++) {
                         cells[i].textContent = word[i];
-                        cells[i].classList.add('found');
+                        cells[i].classList.add('bg-emerald-500', 'border-emerald-600', 'text-white', 'shadow-md', 'scale-105');
+                        cells[i].classList.remove('bg-white', 'border-slate-300', 'text-slate-700');
                   }
             }
 
+            // Lancer le prototype
             initLevel();
       </script>
 </body>
